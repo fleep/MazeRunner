@@ -21,6 +21,7 @@ public class MainWindow extends JFrame {
     {
         super();
 
+        // Initialize the window
         setTitle("Maze Runner!");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(500, 660);
@@ -39,6 +40,7 @@ public class MainWindow extends JFrame {
         btnAutoRun.setBounds(315, 5, 150, 50);
         add(btnAutoRun);
 
+        // Create the pull-down of algorithms to choose from, using inner-class AlgoOptino.
         comboAlgos = new JComboBox(new AlgoOption[] {
                 new AlgoOption(1, "Random DFS w/ Backtracking"),
                 new AlgoOption(2, "Dijkstra's Algo"),
@@ -47,15 +49,16 @@ public class MainWindow extends JFrame {
         comboAlgos.setBounds(5, 60, 200, 25);
         add(comboAlgos);
 
+        // Create the run speed textbox and label
         JLabel labelRunSpeed = new JLabel("Run speed (seconds): ");
         labelRunSpeed.setBounds(215, 60, 150, 25);
         add(labelRunSpeed);
 
-        runSpeed = new JTextField("0.5");
+        runSpeed = new JTextField("0.25");
         runSpeed.setBounds(375, 60, 30, 25);
         add(runSpeed);
 
-        // Create the area where the maze will appear
+        // Create the JPanel area where the maze will appear. The Maze object (a JPanel) takes care of its own rendering.
         Maze maze = new Maze();
         maze.setBounds(5, 100, 450, 450);
         maze.setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -75,7 +78,7 @@ public class MainWindow extends JFrame {
         btnRunMaze.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                maze.nextStep();
+                maze.takeStep();
             }
         });
 
@@ -99,11 +102,14 @@ public class MainWindow extends JFrame {
                     autoRunTimer.stop();
                     return;
                 }
-                maze.nextStep();
+                maze.takeStep();
             }
         });
     }
 
+    /**
+     * AlgoOption is a custom object b/c I wanted to store IDs with each option.
+     */
     class AlgoOption {
         int id;
         String label;

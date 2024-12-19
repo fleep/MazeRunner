@@ -15,6 +15,7 @@ public class Maze extends JPanel {
 
     /*
     // Allow diagonals
+    // Uncomment this to allow diagonals. We could throw this into a static method but I don't really care right now.
     int[][] allowedDirections = new int[][] {
             {-1, -1}, {-1, 0}, {-1, 1},
             {0, -1},           {0, 1},
@@ -24,7 +25,7 @@ public class Maze extends JPanel {
 
     int[][] allowedDirections = new int[][] {{-1, 0}, {0, -1}, {0, 1}, {1, 0}};
 
-    public boolean isSolved;
+    // Current maze state
     public enum State {
         NEW,
         RUNNING,
@@ -33,17 +34,20 @@ public class Maze extends JPanel {
     };
     public State state = State.NEW;
 
-
+    // Maze container dimensions
     int renderWidth = 450;
     int renderHeight = 450;
-
     final int BORDER_SIZE = 1;
-    int cellSize;
-    int fillSize;
 
-    RowCol startCell;
+    // Calculated sizes
+    int cellSize;   // The length in pixels of the side of a cell square including the border.
+    int fillSize;   // The length in pixels of the side of a cell square excluding the border.
+
+    // To simplify comparisons, store the coordinates of the start/end cells
+    RowCol startCell = new RowCol(0, 0);
     RowCol finishCell;
 
+    // Potential contents of each cell in the maze grid
     public final int OUT_OF_BOUNDS = -1;
     public final int EMPTY = 0;
     public final int WALL = 1;
@@ -64,6 +68,11 @@ public class Maze extends JPanel {
         generateMaze(rows, cols);
     }
 
+    /**
+     * Regenerate a maze and reset all state.
+     * @param rows
+     * @param cols
+     */
     public void generateMaze(int rows, int cols) {
         System.out.println("Generating new maze!");
         maze = new int[rows][cols];
@@ -80,8 +89,7 @@ public class Maze extends JPanel {
 
         // reinitialize everything
         state = State.NEW;
-        currentNode = new RowCol(0, 0);
-        startCell = new RowCol(0, 0);
+        currentNode = startCell;
         finishCell = new RowCol(rows - 1, cols - 1);
         path = new ArrayList<RowCol>();
         path.add(currentNode);
@@ -92,13 +100,19 @@ public class Maze extends JPanel {
         fillSize = cellSize - BORDER_SIZE * 2;
     }
 
-    public void nextStep() {
+
+    /**
+     * Take another step in solving this maze. Main implementation of pathfinding
+     * algorithms.
+     */
+    public void takeStep() {
         if (state == State.UNSOLVABLE || state == State.WON) {
             return;
         }
 
         state = Maze.State.RUNNING;
 
+        // TODO: replace with logging
         System.out.println("Next step!");
         System.out.println( "Current: "+ currentNode);
         System.out.println( "Current: "+ currentNode);
@@ -119,11 +133,13 @@ public class Maze extends JPanel {
             }
         }
 
-        // If there are no available neighbors, back up the path by 1 and try again
+        // If there are no available neighbors, back up the path by 1 and try again with any unvisited nodes.
+        // There is never a need to revisit a node outside of backtracking the path.
         if (neighbors.size() == 0) {
             path.removeLast();
             if (path.isEmpty()) {
                 state = State.UNSOLVABLE;
+                // todo show an "unsolvable" message
                 System.out.println("Unsolvable!");
             }
             else {
@@ -135,7 +151,7 @@ public class Maze extends JPanel {
             return;
         }
 
-        // For now, choose one at random
+        // For now, choose a direction at random. Changing this is one of the key differences between algos.
         RowCol nextNode = neighbors.get((int) Math.floor(Math.random() * neighbors.size()));
         System.out.println(neighbors);
         System.out.println(nextNode);
@@ -144,6 +160,7 @@ public class Maze extends JPanel {
         visited.add(nextNode);
         currentNode = nextNode;
 
+        // If we've reached the end, change state
         if (currentNode.equals(finishCell)) {
             System.out.println("Solved!");
             state = State.WON;
@@ -151,15 +168,24 @@ public class Maze extends JPanel {
         }
 
         repaint();
-
     }
 
+
+    /**
+     * Draw the maze. This is largely using Graphics2D, part of Java's native AWT (Abstract Window Toolkit) library.
+     * Currently, any repaint will redraw the entire maze.
+     *
+     * todo Consider breaking each cell down into smaller JPanel subcomponents so we can redraw only the parts that are necessary.
+     *
+     * @param g the <code>Graphics</code> object to protect
+     */
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
         Graphics2D g2d = (Graphics2D) g;
 
+        // Draw the grid.
         for (int row = 0, rows = maze.length; row < rows; ++row) {
             for (int col = 0, cols = maze[0].length; col < cols; ++col) {
                 g2d.setColor(Color.BLACK);
@@ -230,6 +256,11 @@ public class Maze extends JPanel {
         return maze[rowCol.getRow()][rowCol.getCol()];
     }
 
+    /**
+     * Find the center of a cell. Useful for drawing lines and positioning the runner.
+     * @param rowCol
+     * @return
+     */
     private int[] centerXY(RowCol rowCol) {
         return new int[] {
                 getX(rowCol.getCol()) + (cellSize / 2),
